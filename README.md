@@ -14,14 +14,19 @@ Second is to `maximize the total number of cities visited by all salesmen` in th
 
 # Implementation details
 
-Class City
-*city_id - unique identifier (integer/number)
-location - [lat, lon] (list of double of fixed size two)
-sell_duration - (integer/number between 0 to 1440)*
+**Class City
 
-Class Salesman
-*salesman_id - unique identifier (integer/number)
-work_time - (integer between 0 to 1440)*
+*city_id - unique identifier (integer/number)*
+
+*location - [lat, lon] (list of double of fixed size two)*
+
+*sell_duration - (integer/number between 0 to 1440)*
+
+**Class Salesman
+
+*salesman_id - unique identifier (integer/number)*
+
+*work_time - (integer between 0 to 1440)*
 
 Assume: all Salesman start at same location - ```dispatch_location```
 ```
