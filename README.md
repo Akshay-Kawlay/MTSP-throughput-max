@@ -6,7 +6,7 @@ A group of salesmen have to visit a list of cities/locations.
 
 Each city needs to be visited only by one salesman. A city becomes visited after the salesman sells their goods in that city. And each city has a ```sell duration``` (the expected amount of time it will take a salesman to sell their goods; the sell duration is a property of city and is different for different cities but same for all saleman visiting that city). 
 
-Each salesman has fixed ```work time``` that they will work during.
+Each salesman has fixed ```work time``` capacity that they will work during.
 
 The location is defined using latitude, longitude (lat,lon) numbers and a ```traffic_factor``` constant used to convert the lat,lon distance between two cities into time taken to drive from one to other.
 
