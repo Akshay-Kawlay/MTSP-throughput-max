@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-class Salesman
+class Salesman:
     
     def __init__(self, salesman_id, work_time):
         self.salesman_id = salesman_id

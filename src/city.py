@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-class City
+class City:
 
     def __init__(self, city_id, location, sell_duration):
         self.city_id = city_id
