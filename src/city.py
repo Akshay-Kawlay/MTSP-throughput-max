@@ -26,6 +26,7 @@ class City:
         self.city_id = city_id
         self.location = location
         self.sell_duration = sell_duration
+        self.visited = False
     
     def get_id(self):
         return self.city_id

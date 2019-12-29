@@ -27,8 +27,8 @@ from city import *
 '''Inputs'''
 city_list = []
 salesman_list = []
-dispatch_location = [43.653225, -79.383186]
-traffic_factor = 1/80   #Assuming car runs at a constant 80 km/hr speed.
+dispatch_location = [43.653225, -79.383186]     # [lat, lon]
+traffic_factor = 1.0/80.0   # Assuming car runs at a constant 80 km/hr speed.
 
 '''Outputs'''
 salesman_to_cities = {}     # salesman_id -> list of city_ids visited
@@ -42,10 +42,10 @@ def load_data():
         i = 0
         for line in data:
             arr = line.strip('\n').split(', ')
-            lat = float(arr[0]); lon = float(arr[1]); sell_duration = int(arr[2])
+            lat = float(arr[0]); lon = float(arr[1]); sell_duration = float(arr[2])
             city_list.append(City(i, [lat,lon] ,sell_duration))
             i+=1
-    with open('../data/salesmen.txt', 'r') as f:    #loading salesmen
+    with open('../data/salesmen.txt', 'r') as f:    # loading salesmen
         data = f.readlines()
         i = 0
         for line in data:
@@ -68,16 +68,16 @@ def get_distance(first, second):        # slow, need to improve
     latlon2 = second.get_location()
     R = 6373.0  # radius of earth
 
-    lat1 = latlon1[0]
-    lon1 = latlon1[1]
-    lat2 = latlon2[0]
-    lon2 = latlon2[1]
+    lat1 = radians(latlon1[0])
+    lon1 = radians(latlon1[1])
+    lat2 = radians(latlon2[0])
+    lon2 = radians(latlon2[1])
 
     dlon = float(lon2) - float(lon1)
     dlat = float(lat2) - float(lat1)
 
-    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    a = sin(dlat / 2.0)**2.0 + cos(lat1) * cos(lat2) * sin(dlon / 2.0)**2.0
+    c = 2.0 * atan2(sqrt(a), sqrt(1 - a))
 
     distance = R * c
     return distance
@@ -107,16 +107,52 @@ def calculate_results(solution):
         distance += get_distance(city_list[cities[len(cities)-1]], start_city)
     print("Total distance", distance)
 
-def run_algorithm():
+def run_greedy_algorithm():
     '''
-    Approximation algorithm 
+    Choosing closest city (smallest distance) first
     '''
+    global salesman_to_cities
+    # set all cities to not visited
+    for city in city_list:
+        city.visited = False
 
-    return {}
+    # initialize salesman_to_city
+    for salesman in salesman_list:
+        salesman_to_cities[salesman.get_id()] = []
+    
+    # return_dist = 0
+    next_city = 0
+    start_city = City(-1, dispatch_location, 0)
+    for salesman in salesman_list:
+        current_city = start_city
+        # find closest city
+        capacity = float(salesman.get_work_time())
+        while(capacity > 0.0):
+            min_time = float("inf")
+            dist = 0.0
+            for i in range(len(city_list)):
+                if not city_list[i].visited:
+                    dist = get_distance(current_city, city_list[i])
+                    #return_dist = get_distance(city_list[i], start_city)
+                    city_sell_duration = city_list[i].get_sell_duration()
+                    if (dist)*traffic_factor+city_sell_duration < min_time:
+                        min_time = (dist)*traffic_factor+city_sell_duration
+                        next_city = city_list[i]
+
+            if capacity > min_time:
+                capacity -= min_time
+                next_city.visited = True
+                current_city = next_city
+                salesman_to_cities[salesman.get_id()].append(next_city.get_id())
+            else:
+                break
+
+    print(salesman_to_cities)
+    return salesman_to_cities
 
 def main():            
     load_data()
-    solution = run_algorithm()
+    solution = run_greedy_algorithm()
     calculate_results(solution)
     # print_loaded_cities_and_salesmen()
 
