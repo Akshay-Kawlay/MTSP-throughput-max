@@ -49,3 +49,11 @@ Output:
 2. total distance travelled (integer/number)
 3. total cities visited (integer/number).
 ```
+
+# Algorithms
+
+## Greedy w.r.t time
+In this approach, we pick the first salesman in the list and choose to send him to the closest(in terms of distance) city. Then from there he goes to the next city that is closest to his current location and this continues. We also keep track of his time spent and stop once the time exceeds his `work time` capacity. We account for travel time from one city to another as well as city sell duration.
+Once the salesman is timed out, we move to the next from the list and continue the same above process. This greedy approach only focuses on city distance and not city sell duration.
+
+
