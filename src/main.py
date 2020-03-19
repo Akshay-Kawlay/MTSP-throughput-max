@@ -23,12 +23,13 @@
 from math import sin, cos, sqrt, atan2, radians
 from salesman import *
 from city import *
+from genetic_algorithm import *
 
 '''Inputs'''
 city_list = []
 salesman_list = []
 dispatch_location = [43.653225, -79.383186]     # [lat, lon]
-traffic_factor = 1.0/80.0   # Assuming car runs at a constant 80 km/hr speed.
+traffic_factor = 1.0/60.0   # Assuming car runs at a constant 80 km/hr speed.
 
 '''Outputs'''
 salesman_to_cities = {}     # salesman_id -> list of city_ids visited
@@ -54,6 +55,23 @@ def load_data():
             salesman_list.append(Salesman(i, work_time))
             i+=1
 
+def compute_cost_matrix():
+    '''
+    creates an asymmetric matrix of travel time between all pairs of cities
+    Includes sell duration of cities
+    '''
+    n = len(city_list)
+    cost_matrix = [[-1 for i in range(n)] for j in range(n)]
+
+    #get travel time with sell duration
+    for i in range(n):
+        for j in range(n):
+            sell_duration = city_list[j].get_sell_duration()
+            cost_matrix[i][j] = traffic_factor*get_distance(city_list[i], city_list[j]) +  sell_duration
+    # print(cost_matrix)
+
+    return cost_matrix
+
 def print_loaded_cities_and_salesmen():
     for city in city_list:
         print(city.get_id())
@@ -64,6 +82,11 @@ def print_loaded_cities_and_salesmen():
         print(salesman.get_work_time())
 
 def get_distance(first, second):        # slow, need to improve
+    '''
+    first (type : City)
+    second (type : City)
+    return the distance between first city and second city
+    '''
     latlon1 = first.get_location()
     latlon2 = second.get_location()
     R = 6373.0  # radius of earth
@@ -101,13 +124,15 @@ def calculate_results(solution):
     start_city = City(-1, dispatch_location, 0)
     for s_id in solution:
         cities = solution[s_id]
+        if len(cities) <= 0:
+            continue
         distance += get_distance(start_city, city_list[cities[0]])
         for i in range(len(cities)-1):
             distance += get_distance(city_list[cities[i]], city_list[cities[i+1]])
         distance += get_distance(city_list[cities[len(cities)-1]], start_city)
     print("Total distance", distance)
 
-def run_greedy_algorithm():
+def run_greedy_algorithm(cost_matrix):
     '''
     Choosing closest city (smallest distance) first
     '''
@@ -125,18 +150,19 @@ def run_greedy_algorithm():
     start_city = City(-1, dispatch_location, 0)
     for salesman in salesman_list:
         current_city = start_city
-        # find closest city
         capacity = float(salesman.get_work_time())
         while(capacity > 0.0):
             min_time = float("inf")
-            dist = 0.0
-            for i in range(len(city_list)):
+            for i in range(len(city_list)):     # find the closest unvisited city
                 if not city_list[i].visited:
-                    dist = get_distance(current_city, city_list[i])
                     #return_dist = get_distance(city_list[i], start_city)
-                    city_sell_duration = city_list[i].get_sell_duration()
-                    if (dist)*traffic_factor+city_sell_duration < min_time:
-                        min_time = (dist)*traffic_factor+city_sell_duration
+                    if current_city.get_id() < 0:       # starting location
+                        cost = get_distance(current_city, city_list[i])*traffic_factor + city_list[i].get_sell_duration()
+                    else:
+                        cost = cost_matrix[current_city.get_id()][city_list[i].get_id()]
+
+                    if cost < min_time:
+                        min_time = cost
                         next_city = city_list[i]
 
             if capacity > min_time:
@@ -150,9 +176,54 @@ def run_greedy_algorithm():
     print(salesman_to_cities)
     return salesman_to_cities
 
-def main():            
+def run_smallest_first_algorithm():
+    '''
+    Choosing smallest sell duration city first and map them to decending order of salesmen capacity
+    This algorithm's goal is to generate maximum sales and does not consider travel cost
+    '''
+    global salesman_to_cities
+    # set all cities to not visited
+    for city in city_list:
+        city.visited = False
+
+    # initialize salesman_to_city
+    for salesman in salesman_list:
+        salesman_to_cities[salesman.get_id()] = []
+
+    sorted_city_list = sorted(city_list, key=lambda x: x.sell_duration, reverse=False)
+    sorted_salesman_list = sorted(salesman_list, key=lambda x: x.work_time, reverse=False)
+    cur_salesman_id = 0
+    capacity = float(sorted_salesman_list[cur_salesman_id].get_work_time())
+    for city in sorted_city_list:
+        if (capacity > city.sell_duration):
+            salesman_to_cities[cur_salesman_id].append(city.get_id())
+            capacity -= city.sell_duration
+        else:
+            cur_salesman_id += 1
+            if cur_salesman_id >= len(sorted_salesman_list):
+                break
+            capacity = float(sorted_salesman_list[cur_salesman_id].get_work_time())
+        # print(city.sell_duration)
+    print(salesman_to_cities)
+    return salesman_to_cities
+
+# def run_mtsp_simulated_annealing():
+#     '''
+#     Solved only mtsp problem. Does not consider salesman capacity and city sell duration
+#     Returns solution by simulated annealing
+#     '''
+#     m = len(salesman_list)  # number of agents
+#     temp = 10000            # initial temperature
+#     coolingRate = 0.003
+#     while (temp > 1):
+        
+    
+
+def main():
     load_data()
-    solution = run_greedy_algorithm()
+    cost_matrix = compute_cost_matrix()
+    solution = run_greedy_algorithm(cost_matrix)
+    # solution = run_smallest_first_algorithm()
     calculate_results(solution)
     # print_loaded_cities_and_salesmen()
 
