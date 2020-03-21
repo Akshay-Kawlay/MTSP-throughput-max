@@ -28,7 +28,7 @@ from genetic_algorithm import *
 '''Inputs'''
 city_list = []
 salesman_list = []
-dispatch_location = [43.653225, -79.383186]     # [lat, lon]
+dispatch_location = [43.653225, -79.383186]     # [lat, lon]  # depot city is considered to be the first city from the list of cities
 traffic_factor = 1.0/60.0   # Assuming car runs at a constant 80 km/hr speed.
 
 '''Outputs'''
@@ -37,8 +37,8 @@ total_distance = NotImplemented
 total_cities_visited = NotImplemented
 
 
-def load_data():
-    with open('../data/cities.txt', 'r') as f:      # loading cities
+def load_data(city_filepath, salesmen_filepath):
+    with open(city_filepath, 'r') as f:      # loading cities
         data = f.readlines()
         i = 0
         for line in data:
@@ -46,7 +46,7 @@ def load_data():
             lat = float(arr[0]); lon = float(arr[1]); sell_duration = float(arr[2])
             city_list.append(City(i, [lat,lon] ,sell_duration))
             i+=1
-    with open('../data/salesmen.txt', 'r') as f:    # loading salesmen
+    with open(salesmen_filepath, 'r') as f:    # loading salesmen
         data = f.readlines()
         i = 0
         for line in data:
@@ -81,12 +81,16 @@ def print_loaded_cities_and_salesmen():
         print(salesman.get_id())
         print(salesman.get_work_time())
 
-def get_distance(first, second):        # slow, need to improve
+def get_distance(first, second, isRealWorldData=False):        # slow, need to improve
     '''
     first (type : City)
     second (type : City)
-    return the distance between first city and second city
+    isRealWorldData (type: Boolean)
+    earth lat lon distance formula is used when isRealWorldData is true otherwise euclidean distance is used
+    
+    returns the distance between first city and second city
     '''
+    
     latlon1 = first.get_location()
     latlon2 = second.get_location()
     R = 6373.0  # radius of earth
@@ -95,6 +99,9 @@ def get_distance(first, second):        # slow, need to improve
     lon1 = radians(latlon1[1])
     lat2 = radians(latlon2[0])
     lon2 = radians(latlon2[1])
+
+    if not isRealWorldData:
+        return sqrt((lat1-lat2)**2.0 + (lon2-lon1)**2.0)
 
     dlon = float(lon2) - float(lon1)
     dlat = float(lat2) - float(lat1)
@@ -132,6 +139,7 @@ def calculate_results(solution):
         distance += get_distance(city_list[cities[len(cities)-1]], start_city)
     print("Total distance", distance)
 
+
 def run_greedy_algorithm(cost_matrix):
     '''
     Choosing closest city (smallest distance) first
@@ -147,6 +155,7 @@ def run_greedy_algorithm(cost_matrix):
     
     # return_dist = 0
     next_city = 0
+    wasted_time = 0
     start_city = City(-1, dispatch_location, 0)
     for salesman in salesman_list:
         current_city = start_city
@@ -171,9 +180,11 @@ def run_greedy_algorithm(cost_matrix):
                 current_city = next_city
                 salesman_to_cities[salesman.get_id()].append(next_city.get_id())
             else:
+                wasted_time += capacity
                 break
 
     print(salesman_to_cities)
+    print("Total Capacity Wasted : ", wasted_time)
     return salesman_to_cities
 
 def run_smallest_first_algorithm():
@@ -194,6 +205,7 @@ def run_smallest_first_algorithm():
     sorted_salesman_list = sorted(salesman_list, key=lambda x: x.work_time, reverse=False)
     cur_salesman_id = 0
     capacity = float(sorted_salesman_list[cur_salesman_id].get_work_time())
+    wasted_time = 0
     for city in sorted_city_list:
         if (capacity > city.sell_duration):
             salesman_to_cities[cur_salesman_id].append(city.get_id())
@@ -202,9 +214,11 @@ def run_smallest_first_algorithm():
             cur_salesman_id += 1
             if cur_salesman_id >= len(sorted_salesman_list):
                 break
+            wasted_time += capacity
             capacity = float(sorted_salesman_list[cur_salesman_id].get_work_time())
         # print(city.sell_duration)
     print(salesman_to_cities)
+    print("Total Capacity Wasted : ", wasted_time)
     return salesman_to_cities
 
 # def run_mtsp_simulated_annealing():
@@ -220,7 +234,18 @@ def run_smallest_first_algorithm():
     
 
 def main():
-    load_data()
+    # load_data('../data/cities.txt', '../data/salesmen.txt')
+    
+    # load_data('../data/cities_eil51_random_sell_duration.txt', '../data/salesmen.txt')
+    # load_data('../data/cities_berlin52_random_sell_duration.txt', '../data/salesmen.txt')
+    # load_data('../data/cities_eil76_random_sell_duration.txt', '../data/salesmen.txt')
+    # load_data('../data/cities_rat99_random_sell_duration.txt', '../data/salesmen.txt')
+    
+    # load_data('../data/cities_eil51_60min_sell_duration.txt', '../data/salesmen.txt')
+    # load_data('../data/cities_berlin52_60min_sell_duration.txt', '../data/salesmen.txt')
+    # load_data('../data/cities_eil76_60min_sell_duration.txt', '../data/salesmen.txt')
+    load_data('../data/cities_rat99_60min_sell_duration.txt', '../data/salesmen.txt')
+
     cost_matrix = compute_cost_matrix()
     solution = run_greedy_algorithm(cost_matrix)
     # solution = run_smallest_first_algorithm()
@@ -228,7 +253,7 @@ def main():
     # print_loaded_cities_and_salesmen()
 
 def test():
-    load_data()
+    load_data('../data/cities.txt', '../data/salesmen.txt')
     solution = {}
     solution['1'] = [1,20,30]
     solution['2'] = [2,3,4]
