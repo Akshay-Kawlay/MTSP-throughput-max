@@ -56,4 +56,8 @@ Output:
 In this approach, we pick the first salesman in the list and choose to send him to the closest(in terms of distance) city. Then from there he goes to the next city that is closest to his current location and this continues. We also keep track of his time spent and stop once the time exceeds his `work time` capacity. We account for travel time from one city to another as well as city sell duration.
 Once the salesman is timed out, we move to the next from the list and continue the same above process. This greedy approach only focuses on city distance and not city sell duration.
 
+## Approach 1: Ant Colony with Kmeans
+Kmeans algorithm is run first to create clusters of closely positioned locations. Then for each cluster, Ant Colony Optimization (ACO) is used to solve for single salesman TSP.
 
+## Approach 2: Ant Colony with Genetic Algorithm
+Ant colony is used to solve TSP (single salesman) on the location set. The resulting path is assumed to be the ground truth optimal. Next, genetic algorithm is used to search for the optimal subpath from the ground truth that fits in salesman work time capacity such that total capacity wastage of all salesmen is minimized and number of locations visited is maximized. The expectation is that subpath of an optimal path would also be close to optimal if not optimal. This approach performs better than above two.
